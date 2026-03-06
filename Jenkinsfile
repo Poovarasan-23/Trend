@@ -1,32 +1,47 @@
 pipeline {
     agent any
 
+    environment {
+        IMAGE_NAME = "poov23/trend-app"
+    }
+
     stages {
+
+        stage('Checkout Code') {
+            steps {
+                git 'https://github.com/Poovarasan-23/Trend.git'
+            }
+        }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t poov23/trend-app .'
+                sh 'docker build -t $IMAGE_NAME:latest .'
             }
         }
 
         stage('Docker Login') {
             steps {
-                withCredentials([string(credentialsId: 'dockerhub-creds', variable: 'PASS')]) {
-                    sh 'echo $PASS | docker login -u poov23 --password-stdin'
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh '''
+                    echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                    '''
                 }
             }
         }
 
         stage('Push Docker Image') {
             steps {
-                sh 'docker push poov23/trend-app:latest'
+                sh 'docker push $IMAGE_NAME:latest'
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
                 sh 'kubectl apply -f deployment.yaml'
-                sh 'kubectl apply -f service.yaml'
             }
         }
 
