@@ -3,12 +3,6 @@ pipeline {
 
     stages {
 
-        stage('Clone Repo') {
-            steps {
-                git 'https://github.com/Poovarasan-23/Trend.git'
-            }
-        }
-
         stage('Build Docker Image') {
             steps {
                 sh 'docker build -t poov23/trend-app .'
@@ -17,8 +11,8 @@ pipeline {
 
         stage('Docker Login') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-                    sh 'echo $PASS | docker login -u $USER --password-stdin'
+                withCredentials([string(credentialsId: 'dockerhub-pass', variable: 'PASS')]) {
+                    sh 'echo $PASS | docker login -u poov23 --password-stdin'
                 }
             }
         }
@@ -35,5 +29,6 @@ pipeline {
                 sh 'kubectl apply -f service.yaml'
             }
         }
+
     }
 }
